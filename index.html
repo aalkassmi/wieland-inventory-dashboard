@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Regional Inventory Performance</title>
+<title>Wieland Regional Inventory Performance</title>
 <style>
   :root{
     --ink:#1A1A1A; --red:#C8102E; --red-soft:#FBE9EC; --gray:#6B6E73; --muted:#595959;
@@ -75,7 +75,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1 id="title">Regional Inventory Performance</h1>
+    <h1 id="title">Wieland Regional Inventory Performance</h1>
   </header>
   <p class="eyebrow" id="eyebrow">Loading…</p>
 
@@ -211,7 +211,7 @@ function renderBody(R){
 function render(){
   const R = rowsNow();
   renderHead(); renderCards(R); renderBody(R);
-  document.getElementById("title").textContent = state.loc === "All" ? "Regional Inventory Performance" : state.loc + " Inventory Performance";
+  document.getElementById("title").textContent = state.loc === "All" ? "Wieland Regional Inventory Performance" : state.loc + " Inventory Performance";
   document.getElementById("eyebrow").textContent =
     `${state.loc === "All" ? META.stores.join(" · ") : state.loc} · Listing activity ${META.window_label} · Days on lot as of ${META.age_as_of}`;
   document.getElementById("count").textContent = `${R.length} truck${R.length === 1 ? "" : "s"} shown · sorted by ${state.sort === "act" ? "leads + calls" : COLS.find(c => c.k === state.sort).label}`;
