@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regional Inventory Performance</title>
+<style>
+  :root{
+    --ink:#1A1A1A; --red:#C8102E; --red-soft:#FBE9EC; --gray:#6B6E73; --muted:#595959;
+    --line:#D9D9D9; --band:#F2F2F2; --bg:#FFFFFF; --amber:#8A5A00; --amber-soft:#FFF4DC;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial, Helvetica, sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 32px 48px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1.5px solid var(--ink);padding-bottom:12px}
+  h1{font-size:34px;letter-spacing:-1.2px;margin:0;font-weight:800}
+  .eyebrow{color:var(--red);font-weight:700;font-size:13px;letter-spacing:.6px;text-transform:uppercase;margin:14px 0 18px}
+
+  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:18px}
+  .seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden}
+  .seg button{appearance:none;border:0;background:#fff;color:var(--ink);font:700 14px Arial, sans-serif;padding:9px 18px;cursor:pointer;border-right:1.5px solid var(--ink)}
+  .seg button:last-child{border-right:0}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .seg button:focus-visible,.search:focus-visible,th button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+  .grp{display:flex;align-items:center;gap:8px}
+  .seg-label{font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
+  .search{flex:1;min-width:200px;max-width:320px;border:1.5px solid var(--line);border-radius:6px;padding:9px 12px;font:14px Arial, sans-serif}
+  .count{margin-left:auto;font-size:13px;color:var(--gray)}
+  .loc{appearance:none;-webkit-appearance:none;border:1.5px solid var(--ink);border-radius:6px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231A1A1A' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center;font:700 14px Arial, sans-serif;color:var(--ink);padding:9px 36px 9px 14px;cursor:pointer}
+  .loc:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+  .noprice{color:var(--red);font-weight:700;font-size:12.5px}
+  .xfer{color:var(--gray);font-size:11px;margin-left:3px;cursor:help}
+
+  .cards{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:22px}
+  .card{background:var(--band);padding:14px 16px;border-radius:2px}
+  .card .v{font-size:28px;font-weight:800;letter-spacing:-.8px;color:var(--red);font-variant-numeric:tabular-nums}
+  .card .k{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.3}
+
+
+  .tablewrap{overflow-x:auto;border-bottom:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:980px}
+  thead th{background:var(--ink);color:#fff;text-align:right;padding:0;position:sticky;top:0;z-index:1;white-space:nowrap}
+  thead th.l{text-align:left}
+  th button{all:unset;display:block;width:100%;padding:11px 10px;cursor:pointer;font-weight:700;font-size:13px;box-sizing:border-box}
+  th button::after{content:"";display:inline-block;width:12px;margin-left:4px;color:#F0667B}
+  th[aria-sort="ascending"] button::after{content:"▲"}
+  th[aria-sort="descending"] button::after{content:"▼"}
+  tbody td{padding:9px 10px;text-align:right;border-top:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+  tbody td.l{text-align:left}
+  tbody tr:nth-child(even){background:var(--band)}
+  tbody tr:hover{background:#E9E9E9}
+  td.stock{font-weight:700}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid var(--ink)}
+  .pill.new{background:var(--ink);color:#fff}
+  .off{color:var(--red);font-weight:700}
+  .on{font-weight:700}
+  .age-red{color:var(--red);font-weight:700}
+  .age-bold{font-weight:700}
+  .dash{color:#A0A3A8}
+  .empty{padding:28px;text-align:center;color:var(--gray)}
+  footer{margin-top:14px;font-size:12px;color:var(--gray);line-height:1.55}
+  footer p{margin:0 0 6px}
+
+  @media (max-width:900px){.cards{grid-template-columns:repeat(3,1fr)}}
+  @media (max-width:600px){
+    .wrap{padding:18px 16px 36px}
+    h1{font-size:24px}
+    .cards{grid-template-columns:repeat(2,1fr)}
+    .count{margin-left:0;width:100%}
+    .search{max-width:none}
+  }
+  @media print{.controls{display:none}.tablewrap{overflow:visible}table{min-width:0;font-size:11px}thead th{position:static}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Regional Inventory Performance</h1>
+  </header>
+  <p class="eyebrow" id="eyebrow">Loading…</p>
+
+  <div class="controls">
+    <div class="grp"><span class="seg-label" id="loc-label">Location</span>
+    <select class="loc" id="loc" aria-labelledby="loc-label"><option value="All">All locations</option></select>
+    </div>
+    <div class="grp"><span class="seg-label" id="cond-label">Type</span>
+    <div class="seg" role="group" aria-labelledby="cond-label" id="cond">
+      <button type="button" data-v="All" aria-pressed="true">All</button>
+      <button type="button" data-v="New" aria-pressed="false">New</button>
+      <button type="button" data-v="Used" aria-pressed="false">Used</button>
+    </div>
+    </div>
+    <div class="grp"><span class="seg-label" id="stat-label">Status</span>
+    <div class="seg" role="group" aria-labelledby="stat-label" id="stat">
+      <button type="button" data-v="All" aria-pressed="true">All</button>
+      <button type="button" data-v="Listed" aria-pressed="false">Listed</button>
+      <button type="button" data-v="Off" aria-pressed="false">Off site</button>
+    </div>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Search stock # or truck" aria-label="Search stock number or truck">
+    <span class="count" id="count" aria-live="polite"></span>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <p><b>Definitions.</b> Views = listing page views on premiertruck.com. From Ads = share of those views that came from a Google Ads click. Leads = people who sent a check availability or photo request form on that truck. Calls = phone taps on the listing. Status = on the site today (Motive). Price and days on lot shown for listed units only; "No price" = listed on the site with no price showing.</p>
+    <p><b>Flags.</b> Red days = 180+ on the lot; bold = 90 to 179. Units that sold or left the site during the window keep their activity but show no price or age. ↻ = transferred between stores in this region; days shown are total days in the region, since the store-level age restarts at zero on a transfer.</p>
+    <p><b>Locations.</b> A listed truck sits under the store that owns it in Motive, with its activity combined across all five stores. A truck that left the site sits under the store where it got the most views.</p>
+    <p id="sources"><b>Sources.</b></p>
+  </footer>
+</div>
+
+<script>
+const COLS = [
+  {k:"s", label:"Stock #", l:true},
+  {k:"loc", label:"Location", l:true},
+  {k:"n", label:"Truck", l:true},
+  {k:"c", label:"Type", l:true},
+  {k:"v", label:"Views"},
+  {k:"ad", label:"From Ads"},
+  {k:"l", label:"Leads"},
+  {k:"k", label:"Calls"},
+  {k:"p", label:"Price"},
+  {k:"d", label:"Days on Lot"},
+  {k:"on", label:"Status", l:true}
+];
+
+let DATA = [], META = null;
+const state = { loc:"All", cond:"All", stat:"All", q:"", sort:"act", dir:-1 };
+const fmt = n => n.toLocaleString("en-US");
+const money = n => "$" + n.toLocaleString("en-US");
+const dash = '<span class="dash">—</span>';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function rowsNow(){
+  const q = state.q.trim().toLowerCase();
+  return DATA.filter(r =>
+    (state.loc === "All" || r.loc === state.loc) &&
+    (state.cond === "All" || r.c === state.cond) &&
+    (state.stat === "All" || (state.stat === "Listed" ? r.on : !r.on)) &&
+    (!q || r.s.toLowerCase().includes(q) || r.n.toLowerCase().includes(q))
+  ).sort((a,b) => {
+    let x = a[state.sort], y = b[state.sort];
+    if (state.sort === "act") { if (x !== y) return (x - y) * state.dir; return (a.v - b.v) * state.dir; }
+    if (state.sort === "p") { x = x || null; y = y || null; }
+    if (x === null || x === undefined) return 1;
+    if (y === null || y === undefined) return -1;
+    if (typeof x === "string") return x.localeCompare(y) * state.dir;
+    if (typeof x === "boolean") return ((x?1:0) - (y?1:0)) * state.dir;
+    return (x - y) * state.dir;
+  });
+}
+
+function renderHead(){
+  document.getElementById("head").innerHTML = COLS.map(c => {
+    const s = state.sort === c.k ? (state.dir === 1 ? "ascending" : "descending") : "none";
+    return `<th class="${c.l ? "l" : ""}" aria-sort="${s}"><button type="button" data-k="${c.k}">${c.label}</button></th>`;
+  }).join("");
+}
+
+function renderCards(R){
+  const on = R.filter(r => r.on);
+  const ages = on.map(r => r.d).filter(d => d !== null && d !== undefined);
+  const V = R.reduce((t,r) => t + r.v, 0);
+  const ads = R.reduce((t,r) => t + (r.ad !== null ? r.v * r.ad / 100 : 0), 0);
+  const L = R.reduce((t,r) => t + r.l, 0);
+  const K = R.reduce((t,r) => t + r.k, 0);
+  const cards = [
+    [fmt(on.length) + " / " + fmt(R.length), "units listed now / units with activity in window"],
+    [fmt(V), "listing views"],
+    [V ? Math.round(ads / V * 100) + "%" : "—", "of views from a Google Ads click"],
+    [fmt(L), "lead submitters (forms)"],
+    [fmt(K), "phone taps on listings"],
+    [ages.length ? Math.round(ages.reduce((a,b)=>a+b,0) / ages.length) + " days" : "—", "average age of listed units"]
+  ];
+  document.getElementById("cards").innerHTML = cards.map(([v,k]) => `<div class="card"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("");
+}
+
+function renderBody(R){
+  const tb = document.getElementById("body");
+  if (!R.length) { tb.innerHTML = `<tr><td class="empty" colspan="${COLS.length}">No trucks match these filters.</td></tr>`; return; }
+  tb.innerHTML = R.map(r => {
+    const xf = r.t ? '<span class="xfer" title="Transferred within the region; days are total days in the region">↻</span>' : "";
+    const age = (r.d === null || r.d === undefined) ? dash :
+      `<span class="${r.d >= 180 ? "age-red" : r.d >= 90 ? "age-bold" : ""}">${r.d}</span>${xf}`;
+    const price = r.p ? money(r.p) : (r.on && r.p === 0 ? '<span class="noprice">No price</span>' : dash);
+    return `<tr>
+      <td class="l stock">${esc(r.s)}</td>
+      <td class="l">${esc(r.loc)}</td>
+      <td class="l">${esc(r.n)}</td>
+      <td class="l"><span class="pill ${r.c === "New" ? "new" : ""}">${r.c}</span></td>
+      <td>${fmt(r.v)}</td>
+      <td>${r.ad === null ? dash : r.ad + "%"}</td>
+      <td>${r.l}</td>
+      <td>${r.k}</td>
+      <td>${price}</td>
+      <td>${age}</td>
+      <td class="l">${r.on ? '<span class="on">Listed</span>' : '<span class="off">Off site</span>'}</td>
+    </tr>`;
+  }).join("");
+}
+
+function render(){
+  const R = rowsNow();
+  renderHead(); renderCards(R); renderBody(R);
+  document.getElementById("title").textContent = state.loc === "All" ? "Regional Inventory Performance" : state.loc + " Inventory Performance";
+  document.getElementById("eyebrow").textContent =
+    `${state.loc === "All" ? META.stores.join(" · ") : state.loc} · Listing activity ${META.window_label} · Days on lot as of ${META.age_as_of}`;
+  document.getElementById("count").textContent = `${R.length} truck${R.length === 1 ? "" : "s"} shown · sorted by ${state.sort === "act" ? "leads + calls" : COLS.find(c => c.k === state.sort).label}`;
+}
+
+function wireSeg(id, key){
+  document.getElementById(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    state[key] = b.dataset.v;
+    document.querySelectorAll(`#${id} button`).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    render();
+  });
+}
+
+function init(J){
+  DATA = J.units;
+  DATA.forEach(r => { r.act = r.l + r.k; });
+  const sel = document.getElementById("loc");
+  J.stores.forEach(s => { const o = document.createElement("option"); o.value = s; o.textContent = s; sel.appendChild(o); });
+  sel.addEventListener("change", e => { state.loc = e.target.value; render(); });
+  META = J;
+  const ids = J.stores.map(s => `${s} ${J.dealer_ids[s]}`).join(", ");
+  document.getElementById("sources").innerHTML = `<b>Sources.</b> Mixpanel project 3822144 (dealer IDs ${ids}) for views, ad share, leads and calls; Motive for live inventory and price. Days on lot from the listing’s inventory age. Updated ${J.updated}.`;
+  wireSeg("cond", "cond");
+  wireSeg("stat", "stat");
+  document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; render(); });
+  document.getElementById("head").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const k = b.dataset.k;
+    if (state.sort === k) state.dir *= -1;
+    else { state.sort = k; state.dir = ["s","loc","n","c","on"].includes(k) ? 1 : -1; }
+    render();
+  });
+  render();
+}
+
+fetch("data/inventory.json", {cache: "no-store"})
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(init)
+  .catch(() => { document.getElementById("eyebrow").textContent = "Couldn’t load the inventory data. Refresh the page to try again."; });
+</script>
+</body>
+</html>
